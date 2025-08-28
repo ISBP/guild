@@ -8,8 +8,8 @@
   </head>
   <body>
     <div class="form-container">
-      <h2>SignUp</h2>
-      <form action="/signup" method="post">
+      <h2>Create a User</h2>
+      <form action="/createuser" method="post">
         <div class="form-group">
           <label for="name">Username:</label>
           <input
@@ -17,6 +17,17 @@
             name="username"
             id="name"
             placeholder="Enter your username"
+            required
+            autocomplete="off"
+          />
+        </div>
+        <div class="form-group">
+          <label for="name">Email:</label>
+          <input
+            type="email"
+            name="email"
+            id="email"
+            placeholder="Enter your email"
             required
             autocomplete="off"
           />
@@ -29,6 +40,20 @@
             name="password"
             id="password"
             placeholder="Enter your password"
+          />
+        </div>
+        <div class="form-group">
+          <label for="name">Xuid:</label>
+          <input
+            name="xuid"
+            id="xuid"
+          />
+        </div>
+        <div class="form-group">
+          <label for="name">Dcid:</label>
+          <input
+            name="dcid"
+            id="dcid"
           />
         </div>
 

@@ -9,7 +9,7 @@ const mongoose = require("mongoose"); // Importing mongoose model from ./config
 //const collection = require('./config');
 app.use(cookieParser('dA7rVAdj&fMXg1ku%g!5JmSHfTegMRstBcjYfb5tGS0ayFk9pQ4CdT%$wfcP^m^%'));
 try{
-mongoose.connect('mongodb://localhost:27017/playerdata');
+mongoose.connect('mongodb://localhost:27017/guilddata');
 }
 catch(error){
   console.error('Error connecting to MongoDB:', error);
@@ -17,8 +17,25 @@ catch(error){
 const userSchema = new mongoose.Schema({
   username: String,
   email: String,
+  discordid: String,
+  xuid: String,
   password: String
 });
+const authorization = (req, res, next) => {
+  const token = req.signedCookies.token; 
+
+  if (!token) {
+    return res.sendStatus(403);
+  }
+
+  try {
+    const data = jwt.verify(token, 'GRy&b#Q$0j*0#dp0R7zrr57Fun6GYxf78vkafewD%TZ$FP32CHwuyrueGww@kEEd');
+    console.log(data)
+    next(); 
+  } catch (error) {
+    return res.sendStatus(403); 
+  }
+};
 const collection = new mongoose.model("users", userSchema);
 app.set('view engine', 'html');
 app.use(express.json());
@@ -30,10 +47,13 @@ app.get('/', (req, res) => {
 
 app.use(express.urlencoded({ extended: false }));
 // Handling POST request for signup
-app.post("/signup", async (req, res) => {
+app.post("/createuser", async (req, res) => {
   //needs auth
     const data = {
         name: req.body.username,
+        email: req.body.email,
+        discordid: req.body.dcid,
+        xuid: req.body.xuid,
         password: req.body.password
     };
 
@@ -51,15 +71,20 @@ const User = mongoose.model('username', userSchema);
         data.password = hashedPassword;
                 const newUser = new User({
           username: data.name,
-          password: hashedPassword
+          password: hashedPassword,
+          email: data.email,
+          discordid: data.discordid,
+          xuid: data.xuid
         });
         // Inserting new user data into the database
         try {
             const userData = await collection.insertMany(newUser);
             console.log(userData);
-            res.render("signup_success"); // Render signup_success page upon successful signup
+            res.status(200).send("Inserted data into database!")
+            //res.render("signup_success"); // Render signup_success page upon successful signup
         } catch (error) {
             console.error(error);
+            res.status(500).send("Internal server error")
             res.render("error"); // Render error page if there's an issue with database insertion
         }
     }
@@ -68,7 +93,7 @@ app.get('/login', (req, res) => {
     const filePath = path.join(__dirname, 'files', 'login.html')
     res.render(filePath);
 });
-app.get('/signup', (req, res) => {
+app.get('/createuser', (req, res) => {
     const filePath = path.join(__dirname, 'files', 'signup.html')
     res.render(filePath);
 });
@@ -86,7 +111,7 @@ app.post('/login', async (req, res) => {
         
         if (passwordMatch) {
           console.log(`Pass match ${user}`)
-          jwt.sign({user}, 'privatekey', { expiresIn: '1h' },(err, token) => {
+          jwt.sign({user}, 'GRy&b#Q$0j*0#dp0R7zrr57Fun6GYxf78vkafewD%TZ$FP32CHwuyrueGww@kEEd', { expiresIn: '1h' },(err, token) => {
                 console.log(err)
                 console.log(token)
                 let options = {
@@ -115,21 +140,7 @@ app.post('/login', async (req, res) => {
 });
 
 
-const authorization = (req, res, next) => {
-  const token = req.signedCookies.token; 
 
-  if (!token) {
-    return res.sendStatus(403);
-  }
-
-  try {
-    const data = jwt.verify(token, 'privatekey');
-    console.log(data)
-    next(); 
-  } catch (error) {
-    return res.sendStatus(403); 
-  }
-};
 app.get('/panel', authorization, (req, res) => {
   const filePath = path.join(__dirname, 'files', 'secret.html')
   res.render(filePath)
