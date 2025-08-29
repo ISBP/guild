@@ -47,6 +47,7 @@ app.get('/', (req, res) => {
   res.render(filePath)
 })
 
+
 app.use(express.urlencoded({ extended: false }));
 app.post("/createuser", authorization, async (req, res) => {
   //needs auth
@@ -152,14 +153,67 @@ app.get('/portal', authorization, async (req, res) => {
   res.render(filePath, {
     username: userData.name,
     skin: userData.avatar
-  })
+  })})
+  
+app.get('/join', async (req, res) => {
+ // const playerData = await fetch
 
-app.get('*',(req,res) => 
-  {
-    res.redirect("/")
-  }
-)
+  const filePath = path.join(__dirname, 'files', 'join.html')
+  res.render(filePath)
 })
+app.post("/join", authorization, async (req, res) => {
+  //needs auth
+    const data = {
+        name: req.body.username,
+        email: req.body.email,
+        discordid: req.body.dcid,
+        xuid: req.body.xuid,
+        password: req.body.password
+    };
+
+// Create a User model based on the schema
+const User = mongoose.model('username', userSchema);
+    // Check if the username already exists
+    const playerName = data.name;
+    const rawData = await fetch(`https://api.ngmc.co/v1/players/${playerName}`)
+    const userData = await rawData.json();
+    if(userData.kdr < 1)
+    {
+      res.status(413).send("Requirements not met!")
+    }
+    const existingUser = await collection.findOne({ username: data.name });
+    if (existingUser) {
+        return res.render("user_exists"); // Render user_exists page if username already exists
+    } else {
+        // Hash the password before saving to database
+
+        const saltRounds = 10;
+        const hashedPassword = await bcryptjs.hash(data.password, saltRounds);
+        data.password = hashedPassword;
+          const newUser = new User({
+          username: playerName,
+          password: hashedPassword,
+          email: data.email,
+          discordid: data.discordid,
+          xuid: data.xuid
+        });
+        // Inserting new user data into the database
+
+        try {
+            const userData = await collection.insertMany(newUser);
+            console.log(userData);
+            res.status(200).send("Inserted data into database!")
+            //res.render("signup_success"); // Render signup_success page upon successful signup
+        } catch (error) {
+            console.error(error);
+            res.status(500).send("Internal server error")
+            res.render("error"); // Render error page if there's an issue with database insertion
+        }
+    }
+});  
+
+
+
 app.listen(port, () => {
   console.log(`Website listening on ${port}`)
 })
