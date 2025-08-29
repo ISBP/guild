@@ -31,8 +31,10 @@ const authorization = (req, res, next) => {
   try {
     const data = jwt.verify(token, 'GRy&b#Q$0j*0#dp0R7zrr57Fun6GYxf78vkafewD%TZ$FP32CHwuyrueGww@kEEd');
     console.log(data)
+    req.data = data;
     next(); 
   } catch (error) {
+        console.log(error)
     return res.sendStatus(403); 
   }
 };
@@ -108,7 +110,6 @@ app.post('/login', async (req, res) => {
         
         // Compare passwords
         const passwordMatch = await bcryptjs.compare(req.body.password, user.password);
-        
         if (passwordMatch) {
           console.log(`Pass match ${user}`)
           jwt.sign({user}, 'GRy&b#Q$0j*0#dp0R7zrr57Fun6GYxf78vkafewD%TZ$FP32CHwuyrueGww@kEEd', { expiresIn: '1h' },(err, token) => {
@@ -141,12 +142,18 @@ app.post('/login', async (req, res) => {
 
 
 
-app.get('/panel', authorization, (req, res) => {
+app.get('/panel', authorization, async (req, res) => {
+ // const playerData = await fetch
+  const userID = req.data.user.xuid;
+  const data = await fetch(`https://api.ngmc.co/v1/players/${userID}`)
+  const userData = await data.json();
+  console.log(userID)
+  console.log(userData)
   const filePath = path.join(__dirname, 'files', 'secret.html')
   res.render(filePath)
 
 
 })
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
+  console.log(`Website listening on ${port}`)
 })
