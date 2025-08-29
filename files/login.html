@@ -1,42 +1,154 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>login</title>
-    <link rel="stylesheet" href="/style.css" class="css" />
-  </head>
-  <body>
-    <div class="form-container">
-      <h2>LOGIN</h2>
-      <form action="/login" method="post">
-        <div class="form-group">
-          <label for="name">Username:</label>
-          <input
-            type="text"
-            name="username"
-            id="name"
-            placeholder="Enter your username"
-            required
-            autocomplete="off"
-            
-          />
-        </div>
+<style>
+/* From Uiverse.io by andrew-demchenk0 */ 
+.wrapper {
+  --input-focus: #2d8cf0;
+  --font-color: #323232;
+  --font-color-sub: #666;
+  --bg-color: #fff;
+  --bg-color-alt: #666;
+  --main-color: #323232;
+  
+  /* Center the wrapper content */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; /* Full screen height */
+  width: 100%;   /* Full screen width */
+  position: absolute; /* Ensures the wrapper stays at the top of the page */
+}
 
-        <div class="form-group">
-          <label for="password">Password:</label>
-          <input
-            type="password"
-            name="password"
-            id="password"
-            placeholder="Enter your password"
-          />
-        </div>
+/* switch card */
+.switch {
+  transform: translateY(-200px);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 30px;
+  width: 50px;
+  height: 20px;
+}
 
-        <button type="submit" class="submit-btn">Login</button>
-      </form>
+/* Other styling remains unchanged */
 
-      <p>Dont have an account ? <a href="/signup">Signup</a></p>
-    </div>
-  </body>
-</html>
+/* card */ 
+
+.flip-card__inner {
+  width: 300px;
+  height: 350px;
+  position: relative;
+  background-color: transparent;
+  perspective: 1000px;
+  text-align: center;
+  transition: transform 0.8s;
+  transform-style: preserve-3d;
+
+  /* Center the flip card */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.toggle:checked ~ .flip-card__inner {
+  transform: rotateY(180deg);
+}
+
+/* front and back card styling */
+
+.flip-card__front, .flip-card__back {
+  padding: 20px;
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  background: lightgrey;
+  gap: 20px;
+  border-radius: 5px;
+  border: 2px solid var(--main-color);
+  box-shadow: 4px 4px var(--main-color);
+}
+
+/* Form styling */
+
+.flip-card__form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.title {
+  margin: 20px 0 20px 0;
+  font-size: 25px;
+  font-weight: 900;
+  text-align: center;
+  color: var(--main-color);
+}
+
+.flip-card__input {
+  width: 250px;
+  height: 40px;
+  border-radius: 5px;
+  border: 2px solid var(--main-color);
+  background-color: var(--bg-color);
+  box-shadow: 4px 4px var(--main-color);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--font-color);
+  padding: 5px 10px;
+  outline: none;
+}
+
+.flip-card__input::placeholder {
+  color: var(--font-color-sub);
+  opacity: 0.8;
+}
+
+.flip-card__input:focus {
+  border: 2px solid var(--input-focus);
+}
+
+.flip-card__btn {
+  margin: 20px 0 20px 0;
+  width: 120px;
+  height: 40px;
+  border-radius: 5px;
+  border: 2px solid var(--main-color);
+  background-color: var(--bg-color);
+  box-shadow: 4px 4px var(--main-color);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--font-color);
+  cursor: pointer;
+}
+
+.flip-card__btn:active {
+  box-shadow: 0px 0px var(--main-color);
+  transform: translate(3px, 3px);
+}
+
+</style>
+<!-- From Uiverse.io by andrew-demchenk0 --> 
+<div class="wrapper">
+        <div class="card-switch">
+            <label class="switch">
+               <input type="checkbox" class="toggle">
+               <span class="slider"></span>
+               <span class="card-side"></span>
+               <div class="flip-card__inner">
+                  <div class="flip-card__front">
+                  <div class="flip-card__back">
+                     <form class="flip-card__form" action="/login", method="post">
+                        <input class="flip-card__input" placeholder="Name" name="username" type="username">
+                        <input class="flip-card__input" name="password" placeholder="Password" type="password">
+                        <button class="flip-card__btn">Confirm!</button>
+                     </form>
+                  </div>
+               </div>
+            </label>
+        </div>   
+   </div>

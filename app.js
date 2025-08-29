@@ -48,8 +48,7 @@ app.get('/', (req, res) => {
 })
 
 app.use(express.urlencoded({ extended: false }));
-// Handling POST request for signup
-app.post("/createuser", async (req, res) => {
+app.post("/createuser", authorization, async (req, res) => {
   //needs auth
     const data = {
         name: req.body.username,
@@ -124,7 +123,7 @@ app.post('/login', async (req, res) => {
                 if(err) { console.log(err) }    
                 res.cookie("token", token, options)
                 //res.(200, {"Access-Control-Allow-Credentials": "true"})
-                res.send('Authenticated');
+                res.redirect('/portal');
 
              });
             
@@ -142,17 +141,24 @@ app.post('/login', async (req, res) => {
 
 
 
-app.get('/panel', authorization, async (req, res) => {
+app.get('/portal', authorization, async (req, res) => {
  // const playerData = await fetch
   const userID = req.data.user.xuid;
   const data = await fetch(`https://api.ngmc.co/v1/players/${userID}`)
   const userData = await data.json();
   console.log(userID)
   console.log(userData)
-  const filePath = path.join(__dirname, 'files', 'secret.html')
-  res.render(filePath)
+  const filePath = path.join(__dirname, 'files', 'secret.ejs')
+  res.render(filePath, {
+    username: userData.name,
+    skin: userData.avatar
+  })
 
-
+app.get('*',(req,res) => 
+  {
+    res.redirect("/")
+  }
+)
 })
 app.listen(port, () => {
   console.log(`Website listening on ${port}`)
