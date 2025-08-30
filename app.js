@@ -146,13 +146,37 @@ app.get('/portal', authorization, async (req, res) => {
  // const playerData = await fetch
   const userID = req.data.user.xuid;
   const data = await fetch(`https://api.ngmc.co/v1/players/${userID}`)
+  const rawGuildData = await fetch(`https://api.ngmc.co/v1/guilds/Sillies`)
+  const guildData = await rawGuildData.json();
   const userData = await data.json();
+  const userDataExtra = await userData.extra;
+  let rank = "Member";
+  let color = "Gray";
+  if(guildData.officers.includes(userData.name))
+  {
+    rank = "Officer";
+    color = "blue"
+  }
+  if(guildData.leader == userData.name)
+  {
+    rank = "Leader";
+    color = "red";
+  }
+  let playtime = userDataExtra.onlineTime;
+  playtime = Math.round((playtime/60), 2)
   console.log(userID)
   console.log(userData)
   const filePath = path.join(__dirname, 'files', 'secret.ejs')
   res.render(filePath, {
     username: userData.name,
-    skin: userData.avatar
+    skin: userData.avatar,
+    rank: rank,
+    color: color,
+    playtime: playtime,
+    level: userData.level,
+    kdr: userData.kdr,
+    gxp: userDataExtra.gxp,
+    tgxp: guildData.xp
   })})
   
 
@@ -206,7 +230,8 @@ app.post("/join", async (req, res) => {
 
     if(ngmcData.kdr < 1 || ngmcData.kills < 25 || ngmcData.kdrTotal < 1 || ngmcDataExtra.onlineTime < 180)
     {
-      console.log("Requirements not found!")
+      console.log("Requirements not met!")
+      console.log(ngmcData.kdr)
       res.render(filePath,
         {
           error: "Requirements not met!"
@@ -226,6 +251,7 @@ app.post("/join", async (req, res) => {
 
         }catch(error)
         {
+          console.log(error)
 
         }
         const saltRounds = 10;
@@ -243,7 +269,7 @@ app.post("/join", async (req, res) => {
         try {
             const userData = await collection.insertMany(newUser);
             console.log(userData);
-            res.render("/panel")
+            res.redirect("/login")
             //res.render("signup_success"); // Render signup_success page upon successful signup
         } catch (error) {
             console.error(error);
