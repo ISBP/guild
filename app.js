@@ -164,6 +164,15 @@ app.get('/portal', authorization, async (req, res) => {
   const rawGuildData = await fetch(`https://api.ngmc.co/v1/guilds/Sillies`)
   const guildData = await rawGuildData.json();
   const userData = await data.json();
+  if(userData.guild != "Sillies")
+  {
+    const filePath = path.join(__dirname,"files","join.ejs")
+    res.render(filePath,
+      {
+        error:"You must join the guild to login!"
+      }
+    )
+  }
   const userDataExtra = await userData.extra;
   let rank = "Member";
   let color = "Gray";
@@ -210,12 +219,25 @@ app.post("/join", async (req, res) => {
         email: req.body.email,
         discordid: req.body.dcid,
         xuid: req.body.xuid,
-        password: req.body.password
+        password: req.body.password,
+        confirmpassword: req.body.passwordconfirm
     };
+  
   console.log(data)
   const User = mongoose.model('username', userSchema);
     // Check if the username already exists
     const filePath = path.join(__dirname, 'files', 'join.ejs')
+    console.log(data.password)
+    console.log(data.confirmpassword)
+    if(data.password != data.confirmpassword)
+    {
+      res.render(filePath,
+        {
+          error: "Passwords don't match!"
+        }
+      )
+    }
+    else{
     const existingUser = await collection.findOne({ username: data.name });
     if (existingUser) {
         console.log("USER EXIST ERR")
@@ -292,7 +314,7 @@ app.post("/join", async (req, res) => {
             res.render("error"); // Render error page if there's an issue with database insertion
         }
     }
-});  
+}});  
 
 
 
