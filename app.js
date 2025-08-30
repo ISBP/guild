@@ -43,8 +43,19 @@ app.set('view engine', 'html');
 app.use(express.json());
 app.engine('html', require('ejs').renderFile);
 app.get('/', (req, res) => {
-  const filePath = path.join(__dirname, 'files', 'index.html')
-  res.render(filePath)
+  let user = "";
+  try{
+  const data = jwt.verify(token, 'GRy&b#Q$0j*0#dp0R7zrr57Fun6GYxf78vkafewD%TZ$FP32CHwuyrueGww@kEEd');
+    user = data.user.username;
+   }catch(error)
+   {
+    user = "";
+   } 
+  const filePath = path.join(__dirname, 'files', 'index.ejs')
+  res.render(filePath,{
+
+    user: user
+  })
 })
 
 
@@ -94,6 +105,10 @@ const User = mongoose.model('username', userSchema);
 app.get('/login', (req, res) => {
     const filePath = path.join(__dirname, 'files', 'login.html')
     res.render(filePath);
+});
+app.get('/favicon.ico', (req, res) => {
+    const filePath = path.join(__dirname, 'files', 'favicon.ico')
+    res.sendFile(filePath);
 });
 app.get('/createuser', (req, res) => {
     const filePath = path.join(__dirname, 'files', 'signup.html')
