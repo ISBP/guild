@@ -155,13 +155,16 @@ app.get('/portal', authorization, async (req, res) => {
     skin: userData.avatar
   })})
   
+
 app.get('/join', async (req, res) => {
  // const playerData = await fetch
 
-  const filePath = path.join(__dirname, 'files', 'join.html')
-  res.render(filePath)
+  const filePath = path.join(__dirname, 'files', 'join.ejs')
+  res.render(filePath, {
+    error: ""
+  })
 })
-app.post("/join", authorization, async (req, res) => {
+app.post("/join", async (req, res) => {
   //needs auth
     const data = {
         name: req.body.username,
@@ -170,39 +173,77 @@ app.post("/join", authorization, async (req, res) => {
         xuid: req.body.xuid,
         password: req.body.password
     };
-
-// Create a User model based on the schema
-const User = mongoose.model('username', userSchema);
+  console.log(data)
+  const User = mongoose.model('username', userSchema);
     // Check if the username already exists
-    const playerName = data.name;
-    const rawData = await fetch(`https://api.ngmc.co/v1/players/${playerName}`)
-    const userData = await rawData.json();
-    if(userData.kdr < 1)
-    {
-      res.status(413).send("Requirements not met!")
-    }
+    const filePath = path.join(__dirname, 'files', 'join.ejs')
     const existingUser = await collection.findOne({ username: data.name });
     if (existingUser) {
-        return res.render("user_exists"); // Render user_exists page if username already exists
-    } else {
-        // Hash the password before saving to database
+        console.log("USER EXIST ERR")
+        return res.render(filePath, 
+          {
+            error: "Account already exists!"
+          }
+        );
+      
+    }
+    console.log("Fetching data")
+    const fetchName = data.name
+    console.log(fetchName)
+    console.log(data.name)
+    const ngmcDataRaw = await fetch(`https://api.ngmc.co/v1/players/${fetchName}`);
+    console.log("Data fetched")
+    if(!ngmcDataRaw.ok)
+    {
+      res.render(filePath, {
+        error: "Failed to load player data!"
+      })
+      console.log("No data fetched :(")
+      console.log(ngmcDataRaw)
+    }
+    const ngmcData = await ngmcDataRaw.json();
+    const ngmcDataExtra = await ngmcData.extra;
 
+    if(ngmcData.kdr < 1 || ngmcData.kills < 25 || ngmcData.kdrTotal < 1 || ngmcDataExtra.onlineTime < 180)
+    {
+      console.log("Requirements not found!")
+      res.render(filePath,
+        {
+          error: "Requirements not met!"
+        }
+      )
+    }
+    else {
+      
+        // Hash the password before saving to database
+        try{
+          fetch(`https://api.ngmc.co/v1/guilds/Sillies/invites/${data.username}`, {
+            method: "PUT",
+            headers: {
+              "Authorization": "Guild NTIzNw.aK5woQ.p9mTKG-USamevkSujXAzdnhf-sE"
+            }
+          });
+
+        }catch(error)
+        {
+
+        }
         const saltRounds = 10;
         const hashedPassword = await bcryptjs.hash(data.password, saltRounds);
         data.password = hashedPassword;
           const newUser = new User({
-          username: playerName,
+          username: data.username,
           password: hashedPassword,
           email: data.email,
           discordid: data.discordid,
-          xuid: data.xuid
+          xuid: ngmcData.xuid
         });
         // Inserting new user data into the database
 
         try {
             const userData = await collection.insertMany(newUser);
             console.log(userData);
-            res.status(200).send("Inserted data into database!")
+            res.render("/panel")
             //res.render("signup_success"); // Render signup_success page upon successful signup
         } catch (error) {
             console.error(error);
