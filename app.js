@@ -4,12 +4,15 @@ const port = 3000
 const path = require('path')
 const bcryptjs = require('bcryptjs');
 var cookieParser = require('cookie-parser');
+const cookiesecret = process.env.COOKIE_SECRET_KEY
+const apikey = process.env.GUILD_API_KEY
+const jwtkey = process.env.JWT_SECRET_KEY
+console.log(cookiesecret)
 const jwt = require('jsonwebtoken');
-const mongoose = require("mongoose"); // Importing mongoose model from ./config
-//const collection = require('./config');
-app.use(cookieParser('dA7rVAdj&fMXg1ku%g!5JmSHfTegMRstBcjYfb5tGS0ayFk9pQ4CdT%$wfcP^m^%'));
+const mongoose = require("mongoose"); 
+app.use(cookieParser(cookiesecret));
 try{
-mongoose.connect('mongodb://localhost:27017/guilddata');
+  mongoose.connect('mongodb://localhost:27017/guilddata');
 }
 catch(error){
   console.error('Error connecting to MongoDB:', error);
@@ -29,11 +32,12 @@ const authorization = (req, res, next) => {
   }
 
   try {
-    const data = jwt.verify(token, 'GRy&b#Q$0j*0#dp0R7zrr57Fun6GYxf78vkafewD%TZ$FP32CHwuyrueGww@kEEd');
+    const data = jwt.verify(token, jwtkey);
     console.log(data)
     req.data = data;
     next(); 
-  } catch (error) {
+  } 
+  catch (error) {
         console.log(error)
     return res.sendStatus(403); 
   }
@@ -45,9 +49,10 @@ app.engine('html', require('ejs').renderFile);
 app.get('/', (req, res) => {
   let user = "";
   try{
-  const data = jwt.verify(token, 'GRy&b#Q$0j*0#dp0R7zrr57Fun6GYxf78vkafewD%TZ$FP32CHwuyrueGww@kEEd');
+    const data = jwt.verify(token, jwtkey);
     user = data.user.username;
-   }catch(error)
+   }
+   catch(error)
    {
     user = "";
    } 
@@ -60,48 +65,6 @@ app.get('/', (req, res) => {
 
 
 app.use(express.urlencoded({ extended: false }));
-app.post("/createuser", authorization, async (req, res) => {
-  //needs auth
-    const data = {
-        name: req.body.username,
-        email: req.body.email,
-        discordid: req.body.dcid,
-        xuid: req.body.xuid,
-        password: req.body.password
-    };
-
-// Create a User model based on the schema
-const User = mongoose.model('username', userSchema);
-    // Check if the username already exists
-    const existingUser = await collection.findOne({ username: data.name });
-    if (existingUser) {
-        return res.render("user_exists"); // Render user_exists page if username already exists
-    } else {
-        // Hash the password before saving to database
-
-        const saltRounds = 10;
-        const hashedPassword = await bcryptjs.hash(data.password, saltRounds);
-        data.password = hashedPassword;
-                const newUser = new User({
-          username: data.name,
-          password: hashedPassword,
-          email: data.email,
-          discordid: data.discordid,
-          xuid: data.xuid
-        });
-        // Inserting new user data into the database
-        try {
-            const userData = await collection.insertMany(newUser);
-            console.log(userData);
-            res.status(200).send("Inserted data into database!")
-            //res.render("signup_success"); // Render signup_success page upon successful signup
-        } catch (error) {
-            console.error(error);
-            res.status(500).send("Internal server error")
-            res.render("error"); // Render error page if there's an issue with database insertion
-        }
-    }
-});
 app.get('/login', (req, res) => {
     const filePath = path.join(__dirname, 'files', 'login.html')
     res.render(filePath);
@@ -116,49 +79,45 @@ app.get('/createuser', (req, res) => {
 });
 app.post('/login', async (req, res) => {
     try {
-        // Check if the username exists
-        const user = await collection.findOne({ username: req.body.username });
+          const user = await collection.findOne({ username: req.body.username });
         
-        if (!user) {
-            return res.send("User not found"); // Send message if user does not exist
+        if (!user)
+        {
+          return res.send("User not found"); 
         }
         
-        // Compare passwords
         const passwordMatch = await bcryptjs.compare(req.body.password, user.password);
-        if (passwordMatch) {
+        if (passwordMatch) 
+        {
           console.log(`Pass match ${user}`)
-          jwt.sign({user}, 'GRy&b#Q$0j*0#dp0R7zrr57Fun6GYxf78vkafewD%TZ$FP32CHwuyrueGww@kEEd', { expiresIn: '1h' },(err, token) => {
-                console.log(err)
-                console.log(token)
-                let options = {
-                  maxAge: 1000*60*120,
-                  httpOnly: true,
-                  signed: true,
-
-                }
-                if(err) { console.log(err) }    
-                res.cookie("token", token, options)
-                //res.(200, {"Access-Control-Allow-Credentials": "true"})
-                res.redirect('/portal');
-
+          jwt.sign({user}, jwtkey, { expiresIn: '1h' },(err, token) => {
+            console.log(err)
+            console.log(token)
+            let options = 
+            {
+              maxAge: 1000*60*120,
+              httpOnly: true,
+              signed: true,
+            }
+            if(err) { console.log(err) }    
+            res.cookie("token", token, options)
+            res.redirect('/portal');
              });
-            
-           
-            //Write token here :)
-            //res.render("home"); // Render home page upon successful login
-        } else {
-            res.send("Wrong password"); // Send message if password does not match
-        }
-    } catch (error) {
-        console.error(error);
-        //res.render("wrong_input"); // Render wrong_input page if there's an error during login
+        } 
+        else 
+          {
+            res.send("Wrong password"); 
+          }
+    } 
+    catch (error) 
+    {
+      console.error(error);
+      
     }
 });
 
 
-
 app.get('/portal', authorization, async (req, res) => {
- // const playerData = await fetch
   const userID = req.data.user.xuid;
   const data = await fetch(`https://api.ngmc.co/v1/players/${userID}`)
   const rawGuildData = await fetch(`https://api.ngmc.co/v1/guilds/Sillies`)
@@ -205,7 +164,6 @@ app.get('/portal', authorization, async (req, res) => {
   
 
 app.get('/join', async (req, res) => {
- // const playerData = await fetch
 
   const filePath = path.join(__dirname, 'files', 'join.ejs')
   res.render(filePath, {
@@ -213,23 +171,21 @@ app.get('/join', async (req, res) => {
   })
 })
 app.post("/join", async (req, res) => {
-  //needs auth
-    const data = {
-        name: req.body.username,
-        email: req.body.email,
-        discordid: req.body.dcid,
-        xuid: req.body.xuid,
-        password: req.body.password,
-        confirmpassword: req.body.passwordconfirm
-    };
+  const data = {
+    name: req.body.username,
+    email: req.body.email,
+    discordid: req.body.dcid,
+    xuid: req.body.xuid,
+    password: req.body.password,
+    confirmpassword: req.body.passwordconfirm
+  };
   
   console.log(data)
   const User = mongoose.model('username', userSchema);
-    // Check if the username already exists
-    const filePath = path.join(__dirname, 'files', 'join.ejs')
-    console.log(data.password)
-    console.log(data.confirmpassword)
-    if(data.password != data.confirmpassword)
+  const filePath = path.join(__dirname, 'files', 'join.ejs')
+  console.log(data.password)
+  console.log(data.confirmpassword)
+  if(data.password != data.confirmpassword)
     {
       res.render(filePath,
         {
@@ -238,8 +194,8 @@ app.post("/join", async (req, res) => {
       )
     }
     else{
-    const existingUser = await collection.findOne({ username: data.name });
-    if (existingUser) {
+      const existingUser = await collection.findOne({ username: data.name });
+      if (existingUser) {
         console.log("USER EXIST ERR")
         return res.render(filePath, 
           {
@@ -265,7 +221,7 @@ app.post("/join", async (req, res) => {
     const ngmcData = await ngmcDataRaw.json();
     const ngmcDataExtra = await ngmcData.extra;
 
-    if(ngmcData.kdr < 1 || ngmcData.kills < 25 || ngmcData.kdrTotal < 1 || ngmcDataExtra.onlineTime < 180)
+    if(ngmcData.kdr < 1 || ngmcData.kills < 20 || ngmcData.kdrTotal < 1 || ngmcDataExtra.onlineTime < 180)
     {
       console.log("Requirements not met!")
       console.log(ngmcData.kdr)
@@ -275,18 +231,17 @@ app.post("/join", async (req, res) => {
         }
       )
     }
-    else {
-      
-        // Hash the password before saving to database
+    else {      
         try{
-          fetch(`https://api.ngmc.co/v1/guilds/Sillies/invites/${data.username}`, {
+          fetch(`https://api.ngmc.co/v1/guilds/Sillies/invites/${data.name}`, {
             method: "PUT",
             headers: {
-              "Authorization": "Guild NTIzNw.aK5woQ.p9mTKG-USamevkSujXAzdnhf-sE"
+              "Authorization": apikey
             }
           });
 
-        }catch(error)
+        }
+        catch(error)
         {
           console.log(error)
 
@@ -295,23 +250,21 @@ app.post("/join", async (req, res) => {
         const hashedPassword = await bcryptjs.hash(data.password, saltRounds);
         data.password = hashedPassword;
           const newUser = new User({
-          username: data.username,
+          username: data.name,
           password: hashedPassword,
           email: data.email,
           discordid: data.discordid,
           xuid: ngmcData.xuid
         });
-        // Inserting new user data into the database
-
         try {
             const userData = await collection.insertMany(newUser);
             console.log(userData);
             res.redirect("/login")
-            //res.render("signup_success"); // Render signup_success page upon successful signup
-        } catch (error) {
+        } 
+        catch (error) {
             console.error(error);
             res.status(500).send("Internal server error")
-            res.render("error"); // Render error page if there's an issue with database insertion
+            res.render("error"); 
         }
     }
 }});  
