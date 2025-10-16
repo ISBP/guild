@@ -4,10 +4,10 @@ const port = 3000
 const path = require('path')
 const bcryptjs = require('bcryptjs');
 var cookieParser = require('cookie-parser');
+require('dotenv').config()
 const cookiesecret = process.env.COOKIE_SECRET_KEY
 const apikey = process.env.GUILD_API_KEY
 const jwtkey = process.env.JWT_SECRET_KEY
-console.log(cookiesecret)
 const jwt = require('jsonwebtoken');
 const mongoose = require("mongoose"); 
 app.use(cookieParser(cookiesecret));
@@ -71,6 +71,10 @@ app.get('/login', (req, res) => {
 });
 app.get('/favicon.ico', (req, res) => {
     const filePath = path.join(__dirname, 'files', 'favicon.ico')
+    res.sendFile(filePath);
+});
+app.get('/loginstyle', (req, res) => {
+    const filePath = path.join(__dirname, 'files', 'login.css')
     res.sendFile(filePath);
 });
 app.get('/createuser', (req, res) => {
