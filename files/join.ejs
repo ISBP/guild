@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="./loginstyle">
-    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="./static/login.css">
+    <link rel="shortcut icon" href="./static/favicon.ico" type="image/x-icon">
     <title>Join | Sillies</title>
     <style>
         input::placeholder {
@@ -19,11 +19,10 @@
         <div class="login-header">
             <header>Join Sillies!</header>
             <p style="color:red"><%=error %></p>
-            <p>Use your Minecraft username, however do NOT use the same password for Mi.</p>
         </div>
         <form action="/join", method="post">
             <div class="input-box">
-                <input type="username" class="input-field" placeholder="Username" name="username" autocomplete="off" required>
+                <input type="username" class="input-field" placeholder="Minecraft Username" name="username" autocomplete="off" required>
             </div>
             <div class="input-box">
                 <input type="password" name="password" class="input-field" placeholder="Password" autocomplete="off" required>

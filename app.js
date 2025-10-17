@@ -73,12 +73,8 @@ app.get('/favicon.ico', (req, res) => {
     const filePath = path.join(__dirname, 'files', 'favicon.ico')
     res.sendFile(filePath);
 });
-app.get('/loginstyle', (req, res) => {
-    const filePath = path.join(__dirname, 'files', 'login.css')
-    res.sendFile(filePath);
-});
+app.use('/static', express.static(path.join(__dirname, 'static')))
 app.get('/createuser', (req, res) => {
-    const filePath = path.join(__dirname, 'files', 'signup.html')
     res.render(filePath);
 });
 app.post('/login', async (req, res) => {
@@ -110,7 +106,7 @@ app.post('/login', async (req, res) => {
         } 
         else 
           {
-            res.send("Wrong password"); 
+            return res.send("Wrong password"); 
           }
     } 
     catch (error) 
