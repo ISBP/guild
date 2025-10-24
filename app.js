@@ -33,7 +33,6 @@ const authorization = (req, res, next) => {
 
   try {
     const data = jwt.verify(token, jwtkey);
-    console.log(data)
     req.data = data;
     next(); 
   } 
@@ -49,6 +48,7 @@ app.engine('html', require('ejs').renderFile);
 app.get('/', (req, res) => {
   let user = "";
   try{
+    let token = req.signedCookies.token;
     const data = jwt.verify(token, jwtkey);
     user = data.user.username;
    }
@@ -89,10 +89,7 @@ app.post('/login', async (req, res) => {
         const passwordMatch = await bcryptjs.compare(req.body.password, user.password);
         if (passwordMatch) 
         {
-          console.log(`Pass match ${user}`)
           jwt.sign({user}, jwtkey, { expiresIn: '1h' },(err, token) => {
-            console.log(err)
-            console.log(token)
             let options = 
             {
               maxAge: 1000*60*120,
@@ -126,7 +123,7 @@ app.get('/portal', authorization, async (req, res) => {
   if(userData.guild != "Sillies")
   {
     const filePath = path.join(__dirname,"files","join.ejs")
-    res.render(filePath,
+    return res.render(filePath,
       {
         error:"You must join the guild to login!"
       }
@@ -147,10 +144,8 @@ app.get('/portal', authorization, async (req, res) => {
   }
   let playtime = userDataExtra.onlineTime;
   playtime = Math.round((playtime/60), 2)
-  console.log(userID)
-  console.log(userData)
   const filePath = path.join(__dirname, 'files', 'secret.ejs')
-  res.render(filePath, {
+  return res.render(filePath, {
     username: userData.name,
     skin: userData.avatar,
     rank: rank,
@@ -180,14 +175,13 @@ app.post("/join", async (req, res) => {
     confirmpassword: req.body.passwordconfirm
   };
   
-  console.log(data)
   const User = mongoose.model('username', userSchema);
   const filePath = path.join(__dirname, 'files', 'join.ejs')
   console.log(data.password)
   console.log(data.confirmpassword)
   if(data.password != data.confirmpassword)
     {
-      res.render(filePath,
+      return res.render(filePath,
         {
           error: "Passwords don't match!"
         }
@@ -196,7 +190,6 @@ app.post("/join", async (req, res) => {
     else{
       const existingUser = await collection.findOne({ username: data.name });
       if (existingUser) {
-        console.log("USER EXIST ERR")
         return res.render(filePath, 
           {
             error: "Account already exists!"
@@ -204,27 +197,21 @@ app.post("/join", async (req, res) => {
         );
       
     }
-    console.log("Fetching data")
     const fetchName = data.name
     console.log(fetchName)
     console.log(data.name)
     const ngmcDataRaw = await fetch(`https://api.ngmc.co/v1/players/${fetchName}`);
-    console.log("Data fetched")
     if(!ngmcDataRaw.ok)
     {
-      res.render(filePath, {
+      return res.render(filePath, {
         error: "Failed to load player data!"
       })
-      console.log("No data fetched :(")
-      console.log(ngmcDataRaw)
     }
     const ngmcData = await ngmcDataRaw.json();
     const ngmcDataExtra = await ngmcData.extra;
 
     if(ngmcData.kdr < 1 || ngmcData.kills < 20 || ngmcData.kdrTotal < 1 || ngmcDataExtra.onlineTime < 180)
     {
-      console.log("Requirements not met!")
-      console.log(ngmcData.kdr)
       res.render(filePath,
         {
           error: "Requirements not met!"
@@ -258,13 +245,11 @@ app.post("/join", async (req, res) => {
         });
         try {
             const userData = await collection.insertMany(newUser);
-            console.log(userData);
             res.redirect("/login")
         } 
         catch (error) {
             console.error(error);
-            res.status(500).send("Internal server error")
-            res.render("error"); 
+            return res.status(500).send("Internal server error")
         }
     }
 }});  
