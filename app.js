@@ -8,9 +8,50 @@ require('dotenv').config()
 const cookiesecret = process.env.COOKIE_SECRET_KEY
 const apikey = process.env.GUILD_API_KEY
 const jwtkey = process.env.JWT_SECRET_KEY
+const discordwebhook = process.env.DISCORD_WEBHOOK
 const jwt = require('jsonwebtoken');
 const mongoose = require("mongoose"); 
 app.use(cookieParser(cookiesecret));
+async function logDc(state, message, route, identifier)
+{
+  if(state == "log")
+  {
+    color = "255"
+  }
+  else
+  {
+    color = "14177041"
+  }
+  try{
+  const post = await fetch(discordwebhook, {
+    method: "POST",
+    headers:{
+
+     "Content-Type": "application/json"},
+    body: JSON.stringify({
+      "embeds": [{
+        "author": {
+          "name": "Logging Util",
+          "icon_url": "https://media.tenor.com/hRrV5cps_twAAAAi/cat-silly.gif"
+        },
+        "title": `${state} ${route}`,
+        "color": color,
+        "description": `${identifier} ${message}`
+  }]
+})
+  });
+  if(!post.ok)
+  {
+    console.log(post)
+    console.log(await post.json)
+  }
+}
+  catch(error)
+  {
+    console.log(error)
+  }
+
+}
 try{
   mongoose.connect('mongodb://localhost:27017/guilddata');
 }
@@ -28,7 +69,7 @@ const authorization = (req, res, next) => {
   const token = req.signedCookies.token; 
 
   if (!token) {
-    return res.sendStatus(403);
+    return res.redirect("/login");
   }
 
   try {
@@ -38,7 +79,7 @@ const authorization = (req, res, next) => {
   } 
   catch (error) {
         console.log(error)
-    return res.sendStatus(403); 
+    return res.redirect("/login"); 
   }
 };
 const collection = new mongoose.model("users", userSchema);
@@ -61,6 +102,14 @@ app.get('/', (req, res) => {
 
     user: user
   })
+  let ip = req.ip
+  try{
+    logDc("log", "Rendered home page", "/", `${user}`)
+  }
+  catch{
+    console.log(error)
+  }
+
 })
 
 
@@ -89,16 +138,17 @@ app.post('/login', async (req, res) => {
         const passwordMatch = await bcryptjs.compare(req.body.password, user.password);
         if (passwordMatch) 
         {
-          jwt.sign({user}, jwtkey, { expiresIn: '1h' },(err, token) => {
+          jwt.sign({user}, jwtkey, { expiresIn: '1d' },(err, token) => {
             let options = 
             {
-              maxAge: 1000*60*120,
+              maxAge: 1000*60*60*24,
               httpOnly: true,
               signed: true,
             }
             if(err) { console.log(err) }    
             res.cookie("token", token, options)
             res.redirect('/portal');
+            logDc("log", "Successfully logged in", "/login", req.body.username)
              });
         } 
         else 
@@ -142,8 +192,9 @@ app.get('/portal', authorization, async (req, res) => {
     rank = "Leader";
     color = "red";
   }
+  logDc("log", "Rendered the portal", "/portal", userData.name)
   let playtime = userDataExtra.onlineTime;
-  playtime = Math.round((playtime/60), 2)
+  playtime = Math.round((playtime/60)*10)/10
   const filePath = path.join(__dirname, 'files', 'secret.ejs')
   return res.render(filePath, {
     username: userData.name,
@@ -246,10 +297,14 @@ app.post("/join", async (req, res) => {
         try {
             const userData = await collection.insertMany(newUser);
             res.redirect("/login")
+          logDc("log", "Created new user", "/join", data.name)
+
         } 
         catch (error) {
             console.error(error);
+          logDc("error", "Failed to create new user", "/join", data.name)
             return res.status(500).send("Internal server error")
+
         }
     }
 }});  
