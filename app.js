@@ -172,6 +172,7 @@ app.get('/portal', authorization, async (req, res) => {
   const userData = await data.json();
   if(userData.guild != "Sillies")
   {
+    logDc("error", "User not in guild", "/portal", userData)
     const filePath = path.join(__dirname,"files","join.ejs")
     return res.render(filePath,
       {
